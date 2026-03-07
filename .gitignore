@@ -1,0 +1,25 @@
+# Python virtual environment
+.venv/
+venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Vector database (Chroma)
+vector_store_db/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Jupyter checkpoints (if used)
+.ipynb_checkpoints/
+
+# Environment variables
+.env
