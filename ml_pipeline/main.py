@@ -6,6 +6,9 @@ by providing a sample job description and printing the
 ranked candidates.
 """
 
+import sys, os
+sys.path.insert(0, os.path.dirname(__file__))
+
 from api_interface.screening_service import screen_candidates
 
 

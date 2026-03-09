@@ -12,8 +12,8 @@ explainable ML, no black-box Gemini calls.
 """
 import sys, os
 
-# Add project root to path so we can import existing modules
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+# Add ml_pipeline dir to path so we can import existing modules
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "ml_pipeline"))
 sys.path.insert(0, PROJECT_ROOT)
 
 from sklearn.metrics.pairwise import cosine_similarity
