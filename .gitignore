@@ -1,6 +1,11 @@
 # Python virtual environment
 .venv/
+.venv-mac/
 venv/
+
+# Node
+node_modules/
+frontend/dist/
 
 # Python cache files
 __pycache__/
