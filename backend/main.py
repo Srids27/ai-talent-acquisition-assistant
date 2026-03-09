@@ -1,16 +1,43 @@
 import os
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-from core.database import connect_db, disconnect_db
-from routes import applicants, auth, chat, jobs, scheduling, applicant_portal
+import sys
+import traceback
+
+print(f"[BOOT] Python {sys.version}")
+print(f"[BOOT] Working directory: {os.getcwd()}")
+print(f"[BOOT] Files in cwd: {os.listdir('.')}")
+
+try:
+    from fastapi import FastAPI
+    from fastapi.middleware.cors import CORSMiddleware
+    from contextlib import asynccontextmanager
+    print("[BOOT] FastAPI imported OK")
+
+    from core.database import connect_db, disconnect_db
+    print("[BOOT] Database module imported OK")
+
+    from routes import applicants, auth, chat, jobs, scheduling, applicant_portal
+    print("[BOOT] All route modules imported OK")
+
+except Exception as e:
+    print(f"[FATAL] Import failed: {e}")
+    traceback.print_exc()
+    sys.exit(1)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await connect_db()
+    try:
+        await connect_db()
+        print("[BOOT] Database connected OK")
+    except Exception as e:
+        print(f"[ERROR] Database connection failed: {e}")
+        traceback.print_exc()
+        # Don't crash — let the app start even without DB
     yield
-    await disconnect_db()
+    try:
+        await disconnect_db()
+    except Exception:
+        pass
 
 
 app = FastAPI(
@@ -25,6 +52,7 @@ _allowed_origins = [
     for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
     if o.strip()
 ]
+print(f"[BOOT] CORS origins: {_allowed_origins}")
 
 app.add_middleware(
     CORSMiddleware,
@@ -50,3 +78,10 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/api/health")
+async def api_health():
+    return {"status": "ok"}
+
+print("[BOOT] App created successfully — ready to serve")
