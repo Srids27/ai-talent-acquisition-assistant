@@ -62,7 +62,7 @@ const KOLKATA_COLLEGES = [
   "University of Engineering and Management (UEM)",
 ];
 
-const GOOGLE_CLIENT_ID = "971282716814-4gu0sfa6r49stvgkjag27uja8agsnmjq.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "675529892898-thelsnkavtprj8uopau67vqckk5svss1.apps.googleusercontent.com";
 
 function now() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
 

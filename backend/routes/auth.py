@@ -7,7 +7,7 @@ from google.auth.transport import requests as google_requests
 router = APIRouter()
 
 # Google OAuth Client ID — replace with your real one from Google Cloud Console
-GOOGLE_CLIENT_ID = "971282716814-4gu0sfa6r49stvgkjag27uja8agsnmjq.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = "675529892898-thelsnkavtprj8uopau67vqckk5svss1.apps.googleusercontent.com"
 
 # In production replace with a proper HR User model in MongoDB
 # For demo we use a hardcoded HR account + token issuance
