@@ -7,7 +7,14 @@ from models.applicant import Applicant, ApplicantStatus
 from models.notification import Notification, NotificationType
 from models.job import Job
 from core.ai_engine import analyze_resume, generate_questions, extract_skills_from_text
-from core.resume_scorer import score_resume_ml
+
+# ML resume scoring is optional — sklearn + sentence-transformers are heavy deps
+try:
+    from core.resume_scorer import score_resume_ml
+except ImportError:
+    print("[WARN] resume_scorer unavailable (sklearn not installed) — using fallback")
+    def score_resume_ml(resume_text, job_description=None):
+        return {"similarity_score": 0.5, "match_score": 50, "explanation": "ML scoring unavailable — default score applied."}
 
 router = APIRouter()
 
