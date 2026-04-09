@@ -39,6 +39,18 @@ Other modules (under development):
 - Interview scheduling module
 
 ---
+# 👩‍💻 My Contributions (Frontend & Chatbot)
+
+This project was developed collaboratively. My primary contributions include:
+
+* Designing and developing the **HR Dashboard Frontend**
+* Working on the **Candidate Engagement Chatbot module**
+* Creating UI flows for recruiter interaction with candidate data
+* Assisting in integrating frontend components with backend screening outputs
+* Improving user experience for candidate screening and interaction
+
+This fork represents my understanding, contributions, and enhancements to the system.
+
 
 # Screening Engine Workflow
 
@@ -188,7 +200,7 @@ The system will:
 |------|------|
 | Member 1 | Intelligent Screening Engine |
 | Member 2 | Multi-Agent Orchestration |
-| Member 3 | HR Dashboard Frontend |
+| Member 3 (ME) | HR Dashboard Frontend |
 | Member 4 | Candidate Engagement and Scheduling |
 
 ---
