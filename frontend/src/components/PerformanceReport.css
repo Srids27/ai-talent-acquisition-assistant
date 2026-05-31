@@ -1,0 +1,281 @@
+/* ── PerformanceReport ─────────────────────────────────────────── */
+
+.perf-report {
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: var(--font);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+}
+
+.perf-report__container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 680px;
+}
+
+/* ── Header ─── */
+.perf-report__header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.perf-report__title {
+  color: #fff;
+  font-size: 26px;
+  font-weight: 800;
+  margin-top: 16px;
+  margin-bottom: 6px;
+}
+
+.perf-report__subtitle {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ── Score Ring ─── */
+.perf-report__ring-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.perf-report__ring {
+  position: relative;
+  width: 160px;
+  height: 160px;
+}
+
+.perf-report__ring svg {
+  transform: rotate(-90deg);
+}
+
+.perf-report__ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.perf-report__ring-value {
+  font-size: 36px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+}
+
+.perf-report__ring-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Badges ─── */
+.perf-report__badges {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.perf-report__badge {
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.perf-report__badge--match {
+  background: rgba(0, 112, 243, 0.1);
+  border: 1px solid rgba(0, 112, 243, 0.3);
+  color: #60a5fa;
+}
+
+.perf-report__badge--responses {
+  background: rgba(79, 255, 227, 0.08);
+  border: 1px solid rgba(79, 255, 227, 0.25);
+  color: var(--cyan);
+}
+
+/* ── Score Bars Card ─── */
+.perf-report__bars-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.perf-report__section-label {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 18px;
+}
+
+.perf-report__bar-item {
+  margin-bottom: 16px;
+}
+
+.perf-report__bar-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.perf-report__bar-label {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.perf-report__bar-value {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.perf-report__bar-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.perf-report__bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s ease;
+}
+
+/* ── Strengths + Improvements Grid ─── */
+.perf-report__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.perf-report__list-card {
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.perf-report__list-card--strengths {
+  background: rgba(79, 255, 227, 0.04);
+  border: 1px solid rgba(79, 255, 227, 0.15);
+}
+
+.perf-report__list-card--improve {
+  background: rgba(245, 158, 11, 0.04);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+}
+
+.perf-report__list-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.perf-report__list-title--strengths {
+  color: var(--cyan);
+}
+
+.perf-report__list-title--improve {
+  color: var(--amber);
+}
+
+.perf-report__list-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.perf-report__bullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.perf-report__bullet--cyan {
+  background: var(--cyan);
+}
+
+.perf-report__bullet--amber {
+  background: var(--amber);
+}
+
+.perf-report__list-text {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ── Summary Card ─── */
+.perf-report__summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 28px;
+}
+
+.perf-report__summary-label {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+}
+
+.perf-report__summary-text {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ── Back Button ─── */
+.perf-report__actions {
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Responsive ─── */
+@media (max-width: 768px) {
+  .perf-report {
+    padding: 16px;
+  }
+
+  .perf-report__title {
+    font-size: 22px;
+  }
+
+  .perf-report__badges {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .perf-report__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .perf-report__bars-card {
+    padding: 16px;
+  }
+
+  .perf-report__ring {
+    width: 130px;
+    height: 130px;
+  }
+
+  .perf-report__ring-value {
+    font-size: 28px;
+  }
+}

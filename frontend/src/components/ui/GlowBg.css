@@ -1,0 +1,35 @@
+/* ── Glow Background ───────────────────────────────────────────────────────── */
+.glow-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 112, 243, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 112, 243, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glow-orb--blue {
+  top: 10%;
+  left: 10%;
+  width: 500px;
+  height: 500px;
+  background: rgba(0, 112, 243, 0.06);
+}
+
+.glow-orb--cyan {
+  bottom: 10%;
+  right: 10%;
+  width: 400px;
+  height: 400px;
+  background: rgba(79, 255, 227, 0.04);
+}
