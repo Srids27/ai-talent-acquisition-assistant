@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from core.security import require_hr
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
@@ -41,7 +42,7 @@ def _job_dict(j: Job) -> dict:
 
 
 @router.post("/")
-async def create_job(body: JobCreate):
+async def create_job(body: JobCreate, user: dict = Depends(require_hr)):
     job = Job(**body.dict())
     await job.insert()
     return {"success": True, "job_id": str(job.id), "job": _job_dict(job)}
@@ -66,7 +67,7 @@ async def get_job(job_id: str):
 
 
 @router.patch("/{job_id}")
-async def update_job(job_id: str, body: JobUpdate):
+async def update_job(job_id: str, body: JobUpdate, user: dict = Depends(require_hr)):
     from beanie import PydanticObjectId
     job = await Job.get(PydanticObjectId(job_id))
     if not job:
@@ -80,7 +81,7 @@ async def update_job(job_id: str, body: JobUpdate):
 
 
 @router.delete("/{job_id}")
-async def deactivate_job(job_id: str):
+async def deactivate_job(job_id: str, user: dict = Depends(require_hr)):
     from beanie import PydanticObjectId
     job = await Job.get(PydanticObjectId(job_id))
     if not job:

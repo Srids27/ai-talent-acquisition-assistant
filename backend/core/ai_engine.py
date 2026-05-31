@@ -2,32 +2,13 @@
 AI Engine — uses Groq (Llama 3.3-70B) to analyze resumes, generate questions, and score responses.
 Groq is free, fast, and requires no billing — perfect for academic projects.
 """
-import json
-import os
 import random
-from groq import AsyncGroq
-from core.config import settings
-
-
-# Lazy Groq client — initialized on first use so the API key is always loaded from settings
-_client = None
-
-
-def _get_client() -> AsyncGroq:
-    """Return a configured Groq async client, initializing it on first call."""
-    global _client
-    if _client is None:
-        api_key = settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY", "")
-        if not api_key:
-            raise RuntimeError("GROQ_API_KEY is not set. Add it to backend/.env")
-        print(f"[AI] Configuring Groq client with key: {api_key[:12]}...")
-        _client = AsyncGroq(api_key=api_key)
-    return _client
+from core.groq_client import get_groq_client, safe_json
 
 
 async def _groq_chat(prompt: str, model: str = "llama-3.3-70b-versatile") -> str:
     """Send a prompt to Groq and return the text response."""
-    client = _get_client()
+    client = get_groq_client()
     response = await client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content": prompt}],
@@ -35,26 +16,6 @@ async def _groq_chat(prompt: str, model: str = "llama-3.3-70b-versatile") -> str
         max_tokens=2048,
     )
     return response.choices[0].message.content
-
-
-def _safe_json(text: str) -> dict | list:
-    """Extract JSON from a model response, stripping markdown fences."""
-    import re
-    text = text.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-    if text.endswith("```"):
-        text = text[:-3]
-    text = text.strip()
-    if text.lower().startswith("json"):
-        text = text[4:].strip()
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        match = re.search(r'(\{[\s\S]*\}|\[[\s\S]*\])', text)
-        if match:
-            return json.loads(match.group(1))
-        raise
 
 
 async def analyze_resume(resume_text: str) -> dict:
@@ -76,7 +37,7 @@ Return ONLY valid JSON, no markdown."""
 
     try:
         text = await _groq_chat(prompt)
-        return _safe_json(text)
+        return safe_json(text)
     except Exception as e:
         print(f"[AI] Resume analysis error: {e}")
         return {
@@ -113,7 +74,7 @@ Return ONLY a JSON array of exactly 5 question strings. No markdown, no explanat
 
     try:
         text = await _groq_chat(prompt)
-        questions = _safe_json(text)
+        questions = safe_json(text)
         print(f"[AI] Groq generated {len(questions) if isinstance(questions, list) else 'non-list'} questions")
         if isinstance(questions, list) and len(questions) >= 5:
             return questions[:5]
@@ -167,7 +128,7 @@ Be RUTHLESSLY honest. Do NOT inflate scores. A mediocre answer is a 4, not a 6."
 
     try:
         text = await _groq_chat(prompt)
-        result = _safe_json(text)
+        result = safe_json(text)
         for key in ["relevance", "depth", "resume_alignment", "communication", "overall"]:
             val = result.get(key)
             if val is None or not isinstance(val, (int, float)):
@@ -235,7 +196,7 @@ Return ONLY valid JSON."""
 
     try:
         text = await _groq_chat(prompt)
-        report = _safe_json(text)
+        report = safe_json(text)
         report.setdefault("psychology_rating", 5.0)
         report.setdefault("communication_score", 5.0)
         report.setdefault("confidence_score", 5.0)

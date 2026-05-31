@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
+from core.security import get_current_user
 from models.applicant import Applicant
 from models.notification import Notification
 
@@ -6,7 +7,7 @@ router = APIRouter()
 
 
 @router.get("/me")
-async def get_my_profile(google_id: str = Query(...)):
+async def get_my_profile(google_id: str = Query(...), user: dict = Depends(get_current_user)):
     """Applicant fetches their own profile by google_id."""
     applicant = await Applicant.find_one(Applicant.google_id == google_id)
     if not applicant:
@@ -32,7 +33,7 @@ async def get_my_profile(google_id: str = Query(...)):
 
 
 @router.get("/me/notifications")
-async def get_my_notifications(google_id: str = Query(...)):
+async def get_my_notifications(google_id: str = Query(...), user: dict = Depends(get_current_user)):
     """Get all notifications for this applicant, newest first."""
     notifications = await Notification.find(
         Notification.google_id == google_id
@@ -51,7 +52,7 @@ async def get_my_notifications(google_id: str = Query(...)):
 
 
 @router.post("/me/notifications/read-all")
-async def mark_notifications_read(google_id: str = Query(...)):
+async def mark_notifications_read(google_id: str = Query(...), user: dict = Depends(get_current_user)):
     """Mark all notifications as read for this applicant."""
     notifications = await Notification.find(
         Notification.google_id == google_id,

@@ -20,24 +20,7 @@ Benefits:
 """
 import json
 import re
-import os
-from groq import AsyncGroq
-from core.config import settings
-
-
-# Lazy Groq client — reuses the same pattern as ai_engine.py
-_client = None
-
-
-def _get_client() -> AsyncGroq:
-    """Return a configured Groq async client."""
-    global _client
-    if _client is None:
-        api_key = settings.GROQ_API_KEY or os.getenv("GROQ_API_KEY", "")
-        if not api_key:
-            raise RuntimeError("GROQ_API_KEY is not set")
-        _client = AsyncGroq(api_key=api_key)
-    return _client
+from core.groq_client import get_groq_client
 
 
 # Default JD used when no specific JD is provided
@@ -115,7 +98,7 @@ Return ONLY valid JSON:
 }}"""
 
     try:
-        client = _get_client()
+        client = get_groq_client()
         response = await client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
