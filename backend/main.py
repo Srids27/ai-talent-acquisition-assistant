@@ -49,7 +49,10 @@ app = FastAPI(
 
 _allowed_origins = [
     o.strip()
-    for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
+    for o in os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://localhost:3000,http://localhost:5173,https://ai-talent-acquisition-assistant.vercel.app"
+    ).split(",")
     if o.strip()
 ]
 print(f"[BOOT] CORS origins: {_allowed_origins}")
