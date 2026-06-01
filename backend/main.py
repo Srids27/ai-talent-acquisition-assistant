@@ -110,4 +110,20 @@ async def health():
 async def api_health():
     return {"status": "ok"}
 
+
+@app.get("/api/debug/db")
+async def debug_db():
+    """Check if MongoDB is connected and Beanie is initialized."""
+    from core.database import client
+    from models.job import Job
+    info = {"client_connected": client is not None}
+    try:
+        count = await Job.count()
+        info["jobs_count"] = count
+        info["db_status"] = "connected"
+    except Exception as e:
+        info["db_status"] = "error"
+        info["db_error"] = f"{type(e).__name__}: {str(e)}"
+    return info
+
 print("[BOOT] App created successfully — ready to serve")
