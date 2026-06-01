@@ -21,6 +21,10 @@ services:
         sync: false
       - key: SECRET_KEY
         sync: false
+      - key: HR_EMAIL
+        sync: false
+      - key: HR_PASSWORD
+        sync: false
       - key: ALLOWED_ORIGINS
         sync: false
       - key: FLUSH_ON_STARTUP
