@@ -28,6 +28,29 @@ export default function HRDashboard({ onHome }) {
   const [newJobLoc, setNewJobLoc] = useState("");
   const [jobError, setJobError] = useState("");
 
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+  const [toastFadeOut, setToastFadeOut] = useState(false);
+  const toastTimerRef = useRef(null);
+  const toastFadeTimerRef = useRef(null);
+
+  const showFlash = (message, type = "success") => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    if (toastFadeTimerRef.current) clearTimeout(toastFadeTimerRef.current);
+
+    setToastFadeOut(false);
+    setToast({ show: true, message, type });
+
+    toastFadeTimerRef.current = setTimeout(() => {
+      setToastFadeOut(true);
+    }, 2500);
+
+    toastTimerRef.current = setTimeout(() => {
+      setToast({ show: false, message: "", type: "success" });
+      setToastFadeOut(false);
+    }, 3000);
+  };
+
+
   const refreshSlots = () => {
     api.listSlots().then(setSlots).catch(() => {});
     api.listConfirmedInterviews().then(setConfirmedInterviews).catch(() => {});
@@ -68,8 +91,8 @@ export default function HRDashboard({ onHome }) {
     const doUpdate = async () => { await api.updateApplicantStatus(candidateId, newStatus); refreshCandidates(); };
     try { await doUpdate(); } catch (e) {
       if (e.message === "Failed to fetch" || e.message?.includes("fetch")) {
-        try { await new Promise(r => setTimeout(r, 1000)); await doUpdate(); } catch (e2) { alert(`Network error: ${e2.message}`); }
-      } else { alert(`Error updating status: ${e.message}`); }
+        try { await new Promise(r => setTimeout(r, 1000)); await doUpdate(); } catch (e2) { showFlash(`Network error: ${e2.message}`, "error"); }
+      } else { showFlash(`Error updating status: ${e.message}`, "error"); }
     }
   };
 
@@ -77,14 +100,14 @@ export default function HRDashboard({ onHome }) {
     if (!window.confirm(`Are you absolutely sure you want to permanently delete ${candidateName}? This will remove them from the platform and MongoDB Atlas with a cascading effect.`)) return;
     try {
       await api.deleteApplicant(candidateId);
-      alert(`${candidateName} has been deleted successfully.`);
+      showFlash(`${candidateName} has been deleted successfully.`, "success");
       if (selectedCandidate?.id === candidateId) {
         setSelectedCandidate(null);
       }
       refreshCandidates();
       refreshSlots();
     } catch (e) {
-      alert(`Error deleting candidate: ${e.message}`);
+      showFlash(`Error deleting candidate: ${e.message}`, "error");
     }
   };
 
@@ -92,9 +115,10 @@ export default function HRDashboard({ onHome }) {
     if (!scheduleCandidate || !selectedSlotId) return;
     try {
       const res = await api.bookSlot(scheduleCandidate.id, selectedSlotId);
-      alert(res.message); setScheduleCandidate(null); setSelectedSlotId(null); refreshSlots(); refreshCandidates();
-    } catch (e) { alert(e.message); }
+      showFlash(res.message, "success"); setScheduleCandidate(null); setSelectedSlotId(null); refreshSlots(); refreshCandidates();
+    } catch (e) { showFlash(e.message, "error"); }
   };
+
 
   useEffect(() => {
     if (!selectedCandidate?.chat_session_id) return;
@@ -126,16 +150,17 @@ export default function HRDashboard({ onHome }) {
     if (jobs.length === 0) return null;
     const selectedJob = jobs.find(j => j.id === selectedJobFilter);
     return (
-      <div className="hr__filter">
-        <span className="hr__filter-label">Filter by JD</span>
-        <select value={selectedJobFilter} onChange={e => setSelectedJobFilter(e.target.value)} className="hr__filter-select">
+      <div className="hr__filter d-flex align-items-center gap-3 p-3 mb-4 rounded-3">
+        <span className="hr__filter-label text-uppercase small text-muted">Filter by JD</span>
+        <select value={selectedJobFilter} onChange={e => setSelectedJobFilter(e.target.value)} className="hr__filter-select form-select form-select-sm text-white border-secondary bg-transparent">
           <option value="" style={{ background: "#0d1117" }}>All Positions</option>
           {jobs.map(j => <option key={j.id} value={j.id} style={{ background: "#0d1117" }}>{j.title}</option>)}
         </select>
-        {selectedJob && <span className="hr__filter-count">{candidates.length} applicant{candidates.length !== 1 ? "s" : ""}</span>}
+        {selectedJob && <span className="hr__filter-count text-info small fw-bold">{candidates.length} applicant{candidates.length !== 1 ? "s" : ""}</span>}
       </div>
     );
   };
+
 
   // ── OVERVIEW ──
   const Overview = () => (
@@ -324,8 +349,15 @@ export default function HRDashboard({ onHome }) {
   });
 
   const handleConfirmDate = async (candidateId, date) => {
-    try { await api.confirmInterviewDate(candidateId, date); refreshCandidates(); } catch (e) { alert(e.message); }
+    try {
+      await api.confirmInterviewDate(candidateId, date);
+      showFlash("Interview date confirmed successfully!", "success");
+      refreshCandidates();
+    } catch (e) {
+      showFlash(e.message, "error");
+    }
   };
+
 
   const Schedule = () => (
     <div className="hr__page">
@@ -416,9 +448,17 @@ export default function HRDashboard({ onHome }) {
   };
 
   const handleDeactivateJob = async (jobId) => {
-    if (!window.confirm("Deactivate this job posting?")) return;
-    try { await api.deleteJob(jobId); refreshJobs(); } catch (e) { alert(e.message); }
+    if (!window.confirm("Are you absolutely sure you want to deactivate this job listing? This will permanently delete all candidate profiles applied to this listing with a cascading effect.")) return;
+    try {
+      const res = await api.deleteJob(jobId);
+      showFlash(res.message || "Job deactivated and all applied candidates permanently deleted.", "success");
+      refreshJobs();
+      refreshCandidates();
+    } catch (e) {
+      showFlash(e.message, "error");
+    }
   };
+
 
   const jobsContent = (
     <div className="hr__page">
@@ -427,36 +467,37 @@ export default function HRDashboard({ onHome }) {
       <div className="hr__jobs-grid">
         <div className="hr__jobs-form">
           <p className="hr__section-label hr__section-label--tight">Post New Position</p>
-          <div className="hr__jobs-form-fields">
+          <div className="hr__jobs-form-fields d-flex flex-column gap-3">
             <div>
-              <span className="hr__jobs-form-label">Job Title *</span>
-              <input value={newJobTitle} onChange={e => setNewJobTitle(e.target.value)} placeholder="e.g. Senior React Developer" className="hr__jobs-input" />
+              <span className="hr__jobs-form-label text-muted small mb-1 d-block">Job Title *</span>
+              <input value={newJobTitle} onChange={e => setNewJobTitle(e.target.value)} placeholder="e.g. Senior React Developer" className="hr__jobs-input form-control text-white border-secondary bg-transparent" />
             </div>
             <div>
-              <span className="hr__jobs-form-label">Description *</span>
-              <textarea value={newJobDesc} onChange={e => setNewJobDesc(e.target.value)} placeholder="Detailed job description…" rows={5} className="hr__jobs-textarea" />
+              <span className="hr__jobs-form-label text-muted small mb-1 d-block">Description *</span>
+              <textarea value={newJobDesc} onChange={e => setNewJobDesc(e.target.value)} placeholder="Detailed job description…" rows={5} className="hr__jobs-textarea form-control text-white border-secondary bg-transparent" />
             </div>
             <div>
-              <span className="hr__jobs-form-label">Required Skills (comma-separated)</span>
-              <input value={newJobSkills} onChange={e => setNewJobSkills(e.target.value)} placeholder="React, Node.js, TypeScript" className="hr__jobs-input" />
+              <span className="hr__jobs-form-label text-muted small mb-1 d-block">Required Skills (comma-separated)</span>
+              <input value={newJobSkills} onChange={e => setNewJobSkills(e.target.value)} placeholder="React, Node.js, TypeScript" className="hr__jobs-input form-control text-white border-secondary bg-transparent" />
             </div>
             <div>
-              <span className="hr__jobs-form-label">Nice to Have (comma-separated)</span>
-              <input value={newJobNice} onChange={e => setNewJobNice(e.target.value)} placeholder="AWS, Docker, GraphQL" className="hr__jobs-input" />
+              <span className="hr__jobs-form-label text-muted small mb-1 d-block">Nice to Have (comma-separated)</span>
+              <input value={newJobNice} onChange={e => setNewJobNice(e.target.value)} placeholder="AWS, Docker, GraphQL" className="hr__jobs-input form-control text-white border-secondary bg-transparent" />
             </div>
-            <div className="hr__jobs-row">
-              <div>
-                <span className="hr__jobs-form-label">Experience (years)</span>
-                <input type="number" value={newJobExp} onChange={e => setNewJobExp(e.target.value)} placeholder="3" className="hr__jobs-input" />
+            <div className="hr__jobs-row row g-2">
+              <div className="col-6">
+                <span className="hr__jobs-form-label text-muted small mb-1 d-block">Experience (years)</span>
+                <input type="number" value={newJobExp} onChange={e => setNewJobExp(e.target.value)} placeholder="3" className="hr__jobs-input form-control text-white border-secondary bg-transparent" />
               </div>
-              <div>
-                <span className="hr__jobs-form-label">Location</span>
-                <input value={newJobLoc} onChange={e => setNewJobLoc(e.target.value)} placeholder="Remote / Kolkata" className="hr__jobs-input" />
+              <div className="col-6">
+                <span className="hr__jobs-form-label text-muted small mb-1 d-block">Location</span>
+                <input value={newJobLoc} onChange={e => setNewJobLoc(e.target.value)} placeholder="Remote / Kolkata" className="hr__jobs-input form-control text-white border-secondary bg-transparent" />
               </div>
             </div>
-            {jobError && <p className="hr__jobs-error">{jobError}</p>}
-            <button onClick={handleCreateJob} className="hr__jobs-submit">Post Job Description</button>
+            {jobError && <p className="hr__jobs-error text-danger small">{jobError}</p>}
+            <button onClick={handleCreateJob} className="hr__jobs-submit btn btn-primary w-100 fw-bold mt-2">Post Job Description</button>
           </div>
+
         </div>
 
         <div className="hr__jobs-list">
@@ -530,6 +571,14 @@ export default function HRDashboard({ onHome }) {
         {tab === "messages" && <Messages />}
         {tab === "schedule" && <Schedule />}
       </div>
+
+      {toast.show && (
+        <div className={`hr__toast hr__toast--${toast.type} ${toastFadeOut ? 'hr__toast--fade-out' : ''} d-flex align-items-center gap-3 p-3 shadow-lg rounded-3`}>
+          <span className="hr__toast-icon fs-5">{toast.type === "success" ? "✓" : "⚠️"}</span>
+          <span className="hr__toast-message fw-semibold">{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 }
+

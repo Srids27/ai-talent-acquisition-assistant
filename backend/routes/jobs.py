@@ -86,7 +86,40 @@ async def deactivate_job(job_id: str, user: dict = Depends(require_hr)):
     job = await Job.get(PydanticObjectId(job_id))
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
+
+    # Cascading deletion of all candidates tied to this job
+    from models.applicant import Applicant
+    from models.chat_session import ChatSession
+    from models.interview_slot import InterviewSlot
+    from models.notification import Notification
+
+    applicants = await Applicant.find(Applicant.job_id == job_id).to_list()
+    for applicant in applicants:
+        applicant_id = str(applicant.id)
+        
+        # 1. Release any booked interview slots
+        slots = await InterviewSlot.find(InterviewSlot.booked_by == applicant_id).to_list()
+        for slot in slots:
+            slot.is_booked = False
+            slot.booked_by = None
+            slot.booked_by_name = None
+            slot.booked_at = None
+            await slot.save()
+            
+        # 2. Delete linked AI chat sessions
+        await ChatSession.find(ChatSession.applicant_id == applicant_id).delete()
+        
+        # 3. Delete candidate notifications
+        await Notification.find(Notification.google_id == applicant.google_id).delete()
+        
+        # 4. Delete the applicant profile document
+        await applicant.delete()
+
     job.is_active = False
     job.updated_at = datetime.utcnow()
     await job.save()
-    return {"success": True, "message": "Job deactivated"}
+    
+    return {
+        "success": True, 
+        "message": f"Job deactivated and {len(applicants)} connected candidate profiles permanently deleted with full database cascading effect."
+    }
