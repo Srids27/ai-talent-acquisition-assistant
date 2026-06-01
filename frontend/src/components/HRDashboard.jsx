@@ -250,7 +250,7 @@ export default function HRDashboard({ onHome }) {
               </div>
             )}
             <div className="hr__cand-actions">
-              {c.status === "engaged" && (
+              {["applied", "engaged"].includes(c.status) && (
                 <>
                   <button onClick={() => handleStatusChange(c.id, "shortlisted")} className="hr__action-btn hr__action-btn--shortlist">✓ Shortlist</button>
                   <button onClick={() => handleStatusChange(c.id, "rejected")} className="hr__action-btn hr__action-btn--reject">✗ Reject</button>

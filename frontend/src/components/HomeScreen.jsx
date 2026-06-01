@@ -105,7 +105,20 @@ export default function HomeScreen({ onApplicant, onHR, onApplicantReturn }) {
     }
   };
 
-  if (loading && mode === "applicant" && step === 2) return null;
+  if (loading && mode === "applicant" && step === 2) {
+    return (
+      <div className="home d-flex flex-column align-items-center justify-content-center min-vh-100 text-center">
+        <GlowBg />
+        <div className="home__card p-5 rounded-4 shadow-lg text-center" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", backdropFilter: "blur(14px)", maxWidth: "420px", width: "100%" }}>
+          <div className="spinner-border text-info mb-4" role="status" style={{ width: "3.5rem", height: "3.5rem" }}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h3 className="text-white fw-bold mb-2">Analyzing Resume</h3>
+          <p className="text-muted small mb-0">ARIA is parsing your resume and running semantic analysis. Please wait a few seconds...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="home">
