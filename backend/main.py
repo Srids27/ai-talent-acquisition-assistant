@@ -7,8 +7,9 @@ print(f"[BOOT] Working directory: {os.getcwd()}")
 print(f"[BOOT] Files in cwd: {os.listdir('.')}")
 
 try:
-    from fastapi import FastAPI
+    from fastapi import FastAPI, Request
     from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import JSONResponse
     from contextlib import asynccontextmanager
     print("[BOOT] FastAPI imported OK")
 
@@ -32,7 +33,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[ERROR] Database connection failed: {e}")
         traceback.print_exc()
-        # Don't crash — let the app start even without DB
     yield
     try:
         await disconnect_db()
@@ -47,14 +47,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-_allowed_origins = [
-    o.strip()
-    for o in os.getenv(
-        "ALLOWED_ORIGINS",
-        "http://localhost:3000,http://localhost:5173,https://ai-talent-acquisition-assistant.vercel.app"
-    ).split(",")
-    if o.strip()
-]
+# ── CORS Configuration ──
+# Always include the Vercel production URL, plus any custom origins from env
+_VERCEL_ORIGIN = "https://ai-talent-acquisition-assistant.vercel.app"
+_default_origins = ["http://localhost:3000", "http://localhost:5173", _VERCEL_ORIGIN]
+
+_env_origins = os.getenv("ALLOWED_ORIGINS", "")
+if _env_origins:
+    _extra = [o.strip() for o in _env_origins.split(",") if o.strip()]
+    _allowed_origins = list(set(_default_origins + _extra))
+else:
+    _allowed_origins = _default_origins
+
 print(f"[BOOT] CORS origins: {_allowed_origins}")
 
 app.add_middleware(
@@ -64,6 +68,25 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ── Global exception handler ──
+# Ensures CORS headers are present even on 500 errors
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    origin = request.headers.get("origin", "")
+    headers = {}
+    if origin in _allowed_origins:
+        headers["access-control-allow-origin"] = origin
+        headers["access-control-allow-credentials"] = "true"
+    print(f"[ERROR] {request.method} {request.url.path}: {exc}")
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal server error: {str(exc)}"},
+        headers=headers,
+    )
+
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(applicants.router, prefix="/api/applicants", tags=["Applicants"])
