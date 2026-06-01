@@ -33,14 +33,14 @@ export const GOOGLE_CLIENT_ID = "675529892898-thelsnkavtprj8uopau67vqckk5svss1.a
 export function now() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
 
 export const S = {
-  bg: "#080C14",
+  bg: "#0b0f19",
   surface: "rgba(255,255,255,0.03)",
-  border: "rgba(255,255,255,0.07)",
-  blue: "#0070F3",
-  cyan: "#4FFFE3",
-  text: "#e2e8f0",
-  muted: "#64748b",
-  dim: "#2d3748",
+  border: "rgba(255,255,255,0.08)",
+  blue: "#6366f1",
+  cyan: "#a855f7",
+  text: "#f8fafc",
+  muted: "#94a3b8",
+  dim: "#475569",
 };
 
 export const statusColor = { applied: S.muted, engaged: "#F59E0B", in_review: "#F59E0B", shortlisted: S.cyan, interview_scheduled: "#10B981", pending: S.muted, rejected: "#f87171" };
