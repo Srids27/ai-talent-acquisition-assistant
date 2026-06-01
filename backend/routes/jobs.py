@@ -51,7 +51,7 @@ async def create_job(body: JobCreate, user: dict = Depends(require_hr)):
 @router.get("/")
 async def list_jobs(active_only: bool = True):
     if active_only:
-        jobs = await Job.find(Job.is_active == True).sort("-created_at").to_list()
+        jobs = await Job.find({"is_active": True}).sort("-created_at").to_list()
     else:
         jobs = await Job.find_all().sort("-created_at").to_list()
     return [_job_dict(j) for j in jobs]
