@@ -73,6 +73,21 @@ export default function HRDashboard({ onHome }) {
     }
   };
 
+  const handleDeleteCandidate = async (candidateId, candidateName) => {
+    if (!window.confirm(`Are you absolutely sure you want to permanently delete ${candidateName}? This will remove them from the platform and MongoDB Atlas with a cascading effect.`)) return;
+    try {
+      await api.deleteApplicant(candidateId);
+      alert(`${candidateName} has been deleted successfully.`);
+      if (selectedCandidate?.id === candidateId) {
+        setSelectedCandidate(null);
+      }
+      refreshCandidates();
+      refreshSlots();
+    } catch (e) {
+      alert(`Error deleting candidate: ${e.message}`);
+    }
+  };
+
   const handleBookSlot = async () => {
     if (!scheduleCandidate || !selectedSlotId) return;
     try {
@@ -220,7 +235,9 @@ export default function HRDashboard({ onHome }) {
                 <button onClick={() => { setScheduleCandidate(c); setTab("schedule"); }} className="hr__action-btn hr__action-btn--schedule">📅 Schedule</button>
               )}
               <button onClick={() => { setSelectedCandidate(c); setTab("messages"); }} className="hr__action-btn hr__action-btn--chat">Chat</button>
+              <button onClick={() => handleDeleteCandidate(c.id, c.name)} className="hr__action-btn hr__action-btn--delete">🗑 Delete</button>
             </div>
+
           </div>
         ))}
       </div>

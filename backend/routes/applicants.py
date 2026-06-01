@@ -8,6 +8,8 @@ from beanie import PydanticObjectId
 from models.applicant import Applicant, ApplicantStatus
 from models.notification import Notification, NotificationType
 from models.job import Job
+from models.chat_session import ChatSession
+from models.interview_slot import InterviewSlot
 from core.ai_engine import analyze_resume, generate_questions, extract_skills_from_text
 
 from core.resume_scorer import score_resume_ml
@@ -275,3 +277,32 @@ async def confirm_interview_date(applicant_id: str, body: ConfirmDateRequest, us
     await notif.insert()
 
     return {"success": True, "date": body.date, "status": "interview_scheduled"}
+
+
+@router.delete("/{applicant_id}")
+async def delete_applicant(applicant_id: str, user: dict = Depends(require_hr)):
+    """HR: Permanent candidate deletion with cascading database effect."""
+    applicant = await Applicant.get(PydanticObjectId(applicant_id))
+    if not applicant:
+        raise HTTPException(status_code=404, detail="Applicant not found")
+
+    # 1. Release any Booked Interview Slot
+    slots = await InterviewSlot.find(InterviewSlot.booked_by == applicant_id).to_list()
+    for slot in slots:
+        slot.is_booked = False
+        slot.booked_by = None
+        slot.booked_by_name = None
+        slot.booked_at = None
+        await slot.save()
+
+    # 2. Delete AI Chat Sessions
+    await ChatSession.find(ChatSession.applicant_id == applicant_id).delete()
+
+    # 3. Delete Candidate Notifications
+    await Notification.find(Notification.google_id == applicant.google_id).delete()
+
+    # 4. Delete Applicant Profile
+    await applicant.delete()
+
+    return {"success": True, "message": "Applicant and all associated data deleted successfully."}
+
