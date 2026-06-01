@@ -28,11 +28,12 @@ except Exception as e:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        await connect_db()
+        await connect_db(max_retries=3)
         print("[BOOT] Database connected OK")
     except Exception as e:
-        print(f"[ERROR] Database connection failed: {e}")
+        print(f"[FATAL] Database connection failed after retries: {type(e).__name__}: {e}")
         traceback.print_exc()
+        # App will start but DB routes will fail — debug endpoint will show the error
     yield
     try:
         await disconnect_db()
@@ -113,10 +114,20 @@ async def api_health():
 
 @app.get("/api/debug/db")
 async def debug_db():
-    """Check if MongoDB is connected and Beanie is initialized."""
-    from core.database import client
+    """Check MongoDB status. If DB failed on startup, attempt reconnection."""
+    from core.database import client, _db_ready
     from models.job import Job
-    info = {"client_connected": client is not None}
+    info = {"client_connected": client is not None, "beanie_initialized": _db_ready}
+    
+    if not _db_ready:
+        # Attempt reconnection
+        try:
+            await connect_db(max_retries=1)
+            info["reconnect"] = "success"
+        except Exception as e:
+            info["reconnect"] = f"failed: {type(e).__name__}: {str(e)}"
+            return info
+    
     try:
         count = await Job.count()
         info["jobs_count"] = count
