@@ -1,0 +1,196 @@
+/* ── Loading Screen ─────────────────────────────────────────────────────── */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  font-family: var(--font);
+}
+
+/* ── Orb container ─────────────────────────────────────────────────────── */
+.loading-screen__orb {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  margin-bottom: 40px;
+}
+
+.loading-screen__orb-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--cyan), var(--blue), #080c14);
+  animation: pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 60px rgba(0, 112, 243, 0.6), 0 0 120px rgba(79, 255, 227, 0.2);
+}
+
+.loading-screen__orb-ring {
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(79, 255, 227, 0.3);
+  animation: spin 3s linear infinite;
+}
+
+.loading-screen__orb-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Score display ─────────────────────────────────────────────────────── */
+.loading-screen__score {
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.loading-screen__score-unit {
+  font-size: 14px;
+}
+
+.loading-screen__score-label {
+  font-size: 10px;
+  color: var(--cyan);
+  letter-spacing: 1px;
+}
+
+.loading-screen__icon {
+  font-size: 36px;
+}
+
+/* ── Match badge ───────────────────────────────────────────────────────── */
+.loading-screen__badge {
+  margin-bottom: 24px;
+  padding: 10px 24px;
+  border-radius: 20px;
+}
+
+.loading-screen__badge-text {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ── Heading ───────────────────────────────────────────────────────────── */
+.loading-screen__heading {
+  color: var(--cyan);
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+/* ── Steps list ────────────────────────────────────────────────────────── */
+.loading-screen__steps {
+  width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.loading-screen__step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.5s ease;
+}
+
+.loading-screen__step--pending {
+  opacity: 0.2;
+  transform: translateX(-8px);
+}
+
+.loading-screen__step--done {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.loading-screen__step-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--bg);
+  font-weight: 700;
+}
+
+.loading-screen__step-dot--done {
+  background: linear-gradient(135deg, var(--cyan), var(--blue));
+}
+
+.loading-screen__step-dot--pending {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.loading-screen__step-label {
+  font-size: 13px;
+}
+
+.loading-screen__step-label--done {
+  color: var(--text);
+}
+
+.loading-screen__step-label--pending {
+  color: var(--muted);
+}
+
+/* ── Progress bar ──────────────────────────────────────────────────────── */
+.loading-screen__progress {
+  margin-top: 36px;
+  width: 360px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.loading-screen__progress-bar {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--blue), var(--cyan));
+  transition: width 0.8s ease;
+  box-shadow: 0 0 10px rgba(79, 255, 227, 0.5);
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .loading-screen__steps,
+  .loading-screen__progress {
+    width: 280px;
+  }
+
+  .loading-screen__orb {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 28px;
+  }
+
+  .loading-screen__orb-ring {
+    inset: 8px;
+  }
+
+  .loading-screen__score {
+    font-size: 20px;
+  }
+
+  .loading-screen__icon {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .loading-screen__steps,
+  .loading-screen__progress {
+    width: 320px;
+  }
+}

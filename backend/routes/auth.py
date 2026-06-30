@@ -1,3 +1,5 @@
+import os
+import secrets
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, EmailStr
 from core.security import hash_password, verify_password, create_access_token
@@ -9,10 +11,15 @@ router = APIRouter()
 # Google OAuth Client ID — replace with your real one from Google Cloud Console
 GOOGLE_CLIENT_ID = "675529892898-thelsnkavtprj8uopau67vqckk5svss1.apps.googleusercontent.com"
 
-# In production replace with a proper HR User model in MongoDB
-# For demo we use a hardcoded HR account + token issuance
+# HR credentials — MUST be set via environment variables in production
+_hr_email = os.getenv("HR_EMAIL", "hr@company.com")
+_hr_password = os.getenv("HR_PASSWORD", "")
+if not _hr_password:
+    _hr_password = secrets.token_urlsafe(16)
+    print(f"[WARNING] HR_PASSWORD not set! Generated temporary password: {_hr_password}")
+    print("[WARNING] Set HR_PASSWORD in your .env file for production use.")
 HR_ACCOUNTS = {
-    "hr@company.com": hash_password("hr123")
+    _hr_email: hash_password(_hr_password)
 }
 
 
@@ -95,8 +102,3 @@ async def google_auth(body: GoogleAuthRequest):
         )
 
 
-@router.post("/applicant-token")
-async def applicant_token(email: str):
-    """Issue a short-lived token for an applicant (legacy fallback)."""
-    token = create_access_token({"sub": email, "role": "applicant"})
-    return {"access_token": token, "token_type": "bearer", "role": "applicant"}

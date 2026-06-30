@@ -1,11 +1,15 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request, Query
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Request, Query, Depends
+from core.security import get_current_user, require_hr
 from pydantic import BaseModel
 from typing import List, Optional
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
+from beanie import PydanticObjectId
 from models.applicant import Applicant, ApplicantStatus
 from models.notification import Notification, NotificationType
 from models.job import Job
+from models.chat_session import ChatSession
+from models.interview_slot import InterviewSlot
 from core.ai_engine import analyze_resume, generate_questions, extract_skills_from_text
 
 from core.resume_scorer import score_resume_ml
@@ -25,6 +29,7 @@ async def submit_application(
     preferred_date_1: Optional[str] = Form(None),
     preferred_date_2: Optional[str] = Form(None),
     resume: UploadFile = File(...),
+    user: dict = Depends(get_current_user),
 ):
     """
     Two-step gate: applicant submits profile + resume AFTER Google sign-in.
@@ -32,6 +37,15 @@ async def submit_application(
     Resume is scored against the specific job description if job_id is provided.
     Same user can apply to multiple job descriptions.
     """
+    # File upload validation
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+    ALLOWED_TYPES = ["application/pdf"]
+    if resume.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
+    content = await resume.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="File size exceeds 10MB limit.")
+
     # Check for duplicate: same user + same job
     if job_id:
         existing = await Applicant.find_one(
@@ -43,7 +57,7 @@ async def submit_application(
     if existing:
         raise HTTPException(status_code=400, detail="You have already submitted an application for this position.")
 
-    content = await resume.read()
+
     b64 = base64.b64encode(content).decode("utf-8")
 
     # Extract text from resume (simplified — for production use PyMuPDF)
@@ -69,7 +83,6 @@ async def submit_application(
     job_title = None
     if job_id:
         try:
-            from beanie import PydanticObjectId
             job = await Job.get(PydanticObjectId(job_id))
             if job:
                 job_description = job.description
@@ -126,9 +139,8 @@ async def submit_application(
 
 
 @router.get("/{applicant_id}/questions")
-async def get_questions(applicant_id: str):
+async def get_questions(applicant_id: str, user: dict = Depends(get_current_user)):
     """Get AI-generated questions for an applicant."""
-    from beanie import PydanticObjectId
     applicant = await Applicant.get(PydanticObjectId(applicant_id))
     if not applicant:
         raise HTTPException(status_code=404, detail="Applicant not found")
@@ -139,7 +151,7 @@ async def get_questions(applicant_id: str):
 
 
 @router.get("/", response_model=List[dict])
-async def list_applicants(job_id: Optional[str] = Query(None)):
+async def list_applicants(job_id: Optional[str] = Query(None), user: dict = Depends(require_hr)):
     """HR: get all applicants with full details. Optionally filter by job_id."""
     if job_id:
         applicants = await Applicant.find(Applicant.job_id == job_id).to_list()
@@ -175,8 +187,7 @@ async def list_applicants(job_id: Optional[str] = Query(None)):
 
 
 @router.get("/{applicant_id}")
-async def get_applicant(applicant_id: str):
-    from beanie import PydanticObjectId
+async def get_applicant(applicant_id: str, user: dict = Depends(get_current_user)):
     applicant = await Applicant.get(PydanticObjectId(applicant_id))
     if not applicant:
         raise HTTPException(status_code=404, detail="Applicant not found")
@@ -184,8 +195,7 @@ async def get_applicant(applicant_id: str):
 
 
 @router.patch("/{applicant_id}/status")
-async def update_status(applicant_id: str, request: Request, status: str = None):
-    from beanie import PydanticObjectId
+async def update_status(applicant_id: str, request: Request, status: str = None, user: dict = Depends(require_hr)):
     # Accept status from JSON body OR query parameter (backwards-compatible)
     new_status = status
     try:
@@ -203,15 +213,14 @@ async def update_status(applicant_id: str, request: Request, status: str = None)
         applicant.status = ApplicantStatus(new_status)
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid status: {new_status}")
-    applicant.updated_at = datetime.utcnow()
+    applicant.updated_at = datetime.now(timezone.utc)
     await applicant.save()
     return {"success": True, "status": new_status}
 
 
 # POST version — avoids PATCH CORS issues in some browsers
 @router.post("/{applicant_id}/update-status")
-async def update_status_post(applicant_id: str, request: Request):
-    from beanie import PydanticObjectId
+async def update_status_post(applicant_id: str, request: Request, user: dict = Depends(require_hr)):
     try:
         body = await request.json()
     except Exception:
@@ -226,7 +235,7 @@ async def update_status_post(applicant_id: str, request: Request):
         applicant.status = ApplicantStatus(new_status)
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid status: {new_status}")
-    applicant.updated_at = datetime.utcnow()
+    applicant.updated_at = datetime.now(timezone.utc)
     await applicant.save()
 
     # Auto-create notification when shortlisted
@@ -246,9 +255,8 @@ class ConfirmDateRequest(BaseModel):
     date: str
 
 @router.post("/{applicant_id}/confirm-date")
-async def confirm_interview_date(applicant_id: str, body: ConfirmDateRequest):
+async def confirm_interview_date(applicant_id: str, body: ConfirmDateRequest, user: dict = Depends(require_hr)):
     """HR confirms an interview date for a shortlisted candidate."""
-    from beanie import PydanticObjectId
     applicant = await Applicant.get(PydanticObjectId(applicant_id))
     if not applicant:
         raise HTTPException(status_code=404, detail="Applicant not found")
@@ -269,3 +277,32 @@ async def confirm_interview_date(applicant_id: str, body: ConfirmDateRequest):
     await notif.insert()
 
     return {"success": True, "date": body.date, "status": "interview_scheduled"}
+
+
+@router.delete("/{applicant_id}")
+async def delete_applicant(applicant_id: str, user: dict = Depends(require_hr)):
+    """HR: Permanent candidate deletion with cascading database effect."""
+    applicant = await Applicant.get(PydanticObjectId(applicant_id))
+    if not applicant:
+        raise HTTPException(status_code=404, detail="Applicant not found")
+
+    # 1. Release any Booked Interview Slot
+    slots = await InterviewSlot.find(InterviewSlot.booked_by == applicant_id).to_list()
+    for slot in slots:
+        slot.is_booked = False
+        slot.booked_by = None
+        slot.booked_by_name = None
+        slot.booked_at = None
+        await slot.save()
+
+    # 2. Delete AI Chat Sessions
+    await ChatSession.find(ChatSession.applicant_id == applicant_id).delete()
+
+    # 3. Delete Candidate Notifications
+    await Notification.find(Notification.google_id == applicant.google_id).delete()
+
+    # 4. Delete Applicant Profile
+    await applicant.delete()
+
+    return {"success": True, "message": "Applicant and all associated data deleted successfully."}
+

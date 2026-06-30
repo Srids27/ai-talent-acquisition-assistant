@@ -1,7 +1,7 @@
 from beanie import Document, Indexed
 from pydantic import EmailStr, Field
 from typing import Optional, List
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from enum import Enum
 
 
@@ -13,10 +13,6 @@ class ApplicantStatus(str, Enum):
     INTERVIEW_SCHEDULED = "interview_scheduled"
     REJECTED = "rejected"
 
-
-class SkillScore(Document):
-    skill: str
-    score: float
 
 
 class Applicant(Document):
@@ -44,8 +40,8 @@ class Applicant(Document):
     chat_completed: bool = False
     chat_session_id: Optional[str] = None
     chat_report: Optional[dict] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     class Settings:
         name = "applicants"

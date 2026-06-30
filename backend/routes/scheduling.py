@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from core.security import get_current_user, require_hr
 from pydantic import BaseModel
 from datetime import datetime
 from models.interview_slot import InterviewSlot
@@ -13,7 +14,7 @@ class BookSlotRequest(BaseModel):
 
 
 @router.get("/slots")
-async def list_slots():
+async def list_slots(user: dict = Depends(get_current_user)):
     """List all interview slots with availability."""
     slots = await InterviewSlot.find_all().to_list()
     return [
@@ -30,7 +31,7 @@ async def list_slots():
 
 
 @router.post("/book")
-async def book_slot(body: BookSlotRequest):
+async def book_slot(body: BookSlotRequest, user: dict = Depends(get_current_user)):
     """Book an interview slot. Only SHORTLISTED candidates can book."""
     from beanie import PydanticObjectId
 
@@ -76,7 +77,7 @@ async def book_slot(body: BookSlotRequest):
 
 
 @router.get("/confirmed")
-async def confirmed_interviews():
+async def confirmed_interviews(user: dict = Depends(require_hr)):
     """List all confirmed (booked) interview slots."""
     slots = await InterviewSlot.find(InterviewSlot.is_booked == True).to_list()
     return [

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from core.security import get_current_user
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
@@ -33,7 +34,7 @@ class ScoreRequest(BaseModel):
 
 
 @router.post("/start")
-async def start_session(body: StartSessionRequest):
+async def start_session(body: StartSessionRequest, user: dict = Depends(get_current_user)):
     """Create a new chat session for an applicant."""
     existing = await ChatSession.find_one(
         ChatSession.applicant_id == body.applicant_id,
@@ -59,7 +60,7 @@ async def start_session(body: StartSessionRequest):
 
 
 @router.post("/{session_id}/save")
-async def save_messages(session_id: str, body: SaveMessagesRequest):
+async def save_messages(session_id: str, body: SaveMessagesRequest, user: dict = Depends(get_current_user)):
     """Persist chat messages mid-conversation."""
     from beanie import PydanticObjectId
     session = await ChatSession.get(PydanticObjectId(session_id))
@@ -71,7 +72,7 @@ async def save_messages(session_id: str, body: SaveMessagesRequest):
 
 
 @router.post("/{session_id}/score-response")
-async def score_single_response(session_id: str, body: ScoreRequest):
+async def score_single_response(session_id: str, body: ScoreRequest, user: dict = Depends(get_current_user)):
     """Score a single response in real-time using AI."""
     from beanie import PydanticObjectId
     session = await ChatSession.get(PydanticObjectId(session_id))
@@ -94,7 +95,7 @@ async def score_single_response(session_id: str, body: ScoreRequest):
 
 
 @router.post("/{session_id}/complete")
-async def complete_session(session_id: str, body: CompleteSessionRequest):
+async def complete_session(session_id: str, body: CompleteSessionRequest, user: dict = Depends(get_current_user)):
     """
     Mark chat as done. Generate a real AI assessment report.
     """
@@ -156,7 +157,7 @@ async def complete_session(session_id: str, body: CompleteSessionRequest):
 
 
 @router.get("/{session_id}")
-async def get_session(session_id: str):
+async def get_session(session_id: str, user: dict = Depends(get_current_user)):
     """Get full chat session with messages and scores."""
     from beanie import PydanticObjectId
     session = await ChatSession.get(PydanticObjectId(session_id))

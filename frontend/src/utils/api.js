@@ -72,6 +72,12 @@ export async function updateApplicantStatus(applicantId, status) {
   });
 }
 
+export async function deleteApplicant(applicantId) {
+  return request(`/applicants/${applicantId}`, {
+    method: "DELETE",
+  });
+}
+
 // ── Jobs ──
 export async function listJobs() {
   return request("/jobs/");
